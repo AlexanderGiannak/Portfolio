@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Science Bowl Prototype</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    button { margin: 0.5em 0; padding: 0.5em 1em; }
+    #transcript { margin-top: 1em; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Science Bowl Demo</h1>
+
+  <p id="question">
+    Toss-Up: What is the chemical symbol for gold?
+  </p>
+
+  <label for="voices">Choose Voice: </label>
+  <select id="voices"></select>
+  <button onclick="speakQuestion()">Speak Question</button>
+
+  <br><br>
+
+  <button onclick="startListening()">Start Listening</button>
+  <div id="transcript">Transcript will appear here...</div>
+
+  <script>
+    // --- Text to Speech ---
+    const voicesDropdown = document.getElementById('voices');
+    let voices = [];
+
+    function populateVoices() {
+      voices = speechSynthesis.getVoices();
+      voicesDropdown.innerHTML = voices
+        .map(v => `<option value="${v.name}">${v.name} (${v.lang})</option>`)
+        .join('');
+    }
+
+    speechSynthesis.onvoiceschanged = populateVoices;
+
+    function speakQuestion() {
+      const questionText = document.getElementById('question').textContent;
+      const utterance = new SpeechSynthesisUtterance(questionText);
+      const selectedVoice = voices.find(v => v.name === voicesDropdown.value);
+      if (selectedVoice) utterance.voice = selectedVoice;
+      speechSynthesis.speak(utterance);
+    }
+
+    // --- Speech to Text ---
+    function startListening() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("SpeechRecognition not supported in this browser (try Chrome).");
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onresult = event => {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById("transcript").textContent = "You said: " + transcript;
+      };
+
+      recognition.onerror = err => {
+        document.getElementById("transcript").textContent = "Error: " + err.error;
+      };
+
+      recognition.start();
+    }
+  </script>
+</body>
+</html>
